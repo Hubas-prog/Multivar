@@ -1,3 +1,6 @@
+# Multivar
+---------------------------------------
+
 Objet : Support au cours de statistiques
 
 Titre de l'enseignement : STATISTIQUES MULTIVARIÉES ET ANALYSE DE DONNÉES
