@@ -31,7 +31,7 @@ abline(h=mean(data$hauteur),lty=1,col="red")
 abline(v=mean(data$opercule),lty=1,col="red")
 cor.test(data$hauteur,data$opercule,method="pearson")
 
-############################
+###########################
 # Regression de Y en X
 ############################
 
@@ -162,7 +162,7 @@ arrows(x0=-1*EIG$vectors[1,2],
 # Généralisation a k variables
 ############################
 
-acp=read.table("/Users/cedric.hubas/Documents/CED/2-Enseignement/SEP M2 : ED - multivarié/ACP.txt",,h=T)
+acp=read.table("ACP.txt",,h=T)
 corrplot(cor(acp[,1:13]), method="number")
 pairs(acp[,1:13])
 eigen(cor(acp[,1:13]))
@@ -263,7 +263,8 @@ sum(res.pca$ind$cont[,2][WAi2]) # axe2
 # Indices de dissimilarité
 ############################
 
-afc<-read.table("/Users/cedric.hubas/Documents/CED/2-Enseignement/SEP M2 : ED - multivarié/AFC.txt",h=T)
+afc<-read.table("AFC.txt",h=T)
+names(afc)
 dist.B<-vegdist(afc[,1:35],"bray")
 dist.J<-vegdist(ifelse(afc[,1:35]>0,1,0),"jaccard")
 
