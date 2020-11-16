@@ -18,6 +18,7 @@ library(ggplot2)
 library(scatterplot3d)
 library(pvclust)
 library(ape)
+library(vegan)
 
 ##########################
 # Correlation 
@@ -324,7 +325,7 @@ plot(as.phylo(tree),
 ######################################
 # Tests Mentel
 ######################################
-library(vegan)
+
 data(varespec)
 dim(varespec)
 data(varechem)
@@ -338,7 +339,7 @@ mantel(veg.dist, env.dist, method="spear")
 attr(veg.dist,"Size")
 attr(env.dist,"Size")
 
-mantel.rtest(veg.dist, env.dist, nrepet = 9999)
+mantel.test(veg.dist, env.dist, nrepet = 9999)
 cor.test(as.vector(veg.dist),as.vector(env.dist))
 geo=data.frame(LAT=sample(seq(from=-49.28217,to=-49.28159,by=0.00001),size=24),LONG=sample(seq(from=-16.59406,to=-16.59384,by=0.000001),size=24))
 
@@ -348,13 +349,13 @@ mantel.partial(veg.dist, env.dist, geo.dist, method="pearson", permutations=999)
 
 
 ######################################
-# Tests Mentel Partiel
+# Tests Mantel Partiel
 ######################################
 comm<-read.table("/Users/cedrichubas/Documents/CED/2-Enseignement/SEP M2 : ED - multivarié/comm.txt",head=T)
 soil<-read.table("/Users/cedrichubas/Documents/CED/2-Enseignement/SEP M2 : ED - multivarié/soil.txt",head=T,row.names=1)
 geo<-read.table("/Users/cedrichubas/Documents/CED/2-Enseignement/SEP M2 : ED - multivarié/geo.txt",head=T,row.names=1)
 
-library(vegan)
+data()
 commdist<-vegdist(comm, method="bray")
 soildist<-vegdist(soil, method="euclidean")
 geodist<-vegdist(geo, method="euclidean")
