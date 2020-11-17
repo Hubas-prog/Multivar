@@ -163,7 +163,7 @@ arrows(x0=-1*EIG$vectors[1,2],
 # Généralisation a k variables
 ############################
 
-acp=read.table("ACP.txt",,h=T)
+acp <- read.table("ACP.txt",,h=T)
 corrplot(cor(acp[,1:13]), method="number")
 pairs(acp[,1:13])
 eigen(cor(acp[,1:13]))
@@ -323,7 +323,7 @@ plot(as.phylo(tree),
 
 
 ######################################
-# Tests Mentel
+# Tests Mantel
 ######################################
 
 data(varespec)
