@@ -14,6 +14,8 @@ library(PerformanceAnalytics)
 library(ade4)
 library(factoextra)
 library(cowplot)
+library(vegan)
+library(scatterplot3d)
 
 ###########################
 # aesthetics 
@@ -224,129 +226,62 @@ percent <- read.table("pourcentages.txt",h=T)
 percent$treatment <- substr(percent$ID,1,3)
 percent$time <- substr(percent$ID,4,6)
 
-######################################
-# NMDS
-######################################
+###########################
+# nMDS
+###########################
 
-library(vegan)
-?metaMDS
+?metaMDS # c'est toujours une bonne idée de regarder l'aide
 
-afc <- read.table("AFC.txt",h=T)
+data.nmds <- read.table("AFC.txt",h=T)
 
-dist=vegdist(afc[,1:35],"bray")
-list(dist)
-afc$sitesafc
-as.matrix(dist)
+# petite retouche esthétique de la variable 37
+data.nmds$moisafc <- factor(
+   c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")[data.nmds$moisafc],
+   level=c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"))
 
-matrice=as.matrix(dist)
+dist <- vegdist(data.nmds[,1:35],"bray") # fabriquer une matrice de dissimilarité triangulaire
+matrice <- as.matrix(dist) # convertir en type matrice
 cols=substr(colnames(matrice),1,2)
 rows=substr(rownames(matrice),1,2)
-matrice[rows=="SA",cols=="SA"]
+matrice[rows=="SA",cols=="SA"] # sortir un groupe de la matrice ici Station A
 
+# petit script pour comparer les dissimilarité intra et inter-groupes
 as.vector(dist)
 
    N <- attr(dist, "Size")
    irow <- as.vector(as.dist(row(matrix(nrow = N, ncol = N))))
    icol <- as.vector(as.dist(col(matrix(nrow = N, ncol = N))))
-   group.row=afc$sitesafc[irow]
-   group.col=afc$sitesafc[icol]
+   group.row=data.nmds$sitesafc[irow]
+   group.col=data.nmds$sitesafc[icol]
    new.factor=paste(group.row,group.col)
    site <- split(dist, new.factor)
-names(site)
+   
 boxplot(site)
 
-dist=vegdist(afc[,1:35],"euclidean")
-list(dist)
-afc$sitesafc
+# réaliser une nMDS
 
-   N <- attr(dist, "Size")
-   irow <- as.vector(as.dist(row(matrix(nrow = N, ncol = N))))
-   icol <- as.vector(as.dist(col(matrix(nrow = N, ncol = N))))
-   group.row=afc$sitesafc[irow]
-   group.col=afc$sitesafc[icol]
-   new.factor=paste(group.row,group.col)
-   site <- split(dist, new.factor)
-names(site)
-boxplot(site)
+res.mds <- metaMDS(data.nmds[,1:35],
+                   distance="bray", # pour faire le calcul avec un indice de Bray-Curtis
+                   k=2, # pour contraindre l'analyse sur deux axes
+                   trymax=500,
+                   plot=T) 
+# doit afficher "*** Solution reached" sinon relancer l'analyse et/ou augmenter trymax
 
-?vegdist
-
-######################################
-# Tests Mentel
-######################################
-library(vegan)
-data(varespec)
-dim(varespec)
-data(varechem)
-dim(varechem)
-veg.dist <- vegdist(varespec) # Bray-Curtis
-env.dist <- vegdist(scale(varechem), "euclid")
-mantel(veg.dist, env.dist)
-mantel(veg.dist, env.dist, method="spear")
-attr(veg.dist,"Size")
-attr(env.dist,"Size")
-mantel.rtest(veg.dist, env.dist, nrepet = 9999)
-cor.test(as.vector(veg.dist),as.vector(env.dist))
-geo=data.frame(LAT=sample(seq(from=-49.28217,to=-49.28159,by=0.00001),size=24),LONG=sample(seq(from=-16.59406,to=-16.59384,by=0.000001),size=24))
-geo.dist <- vegdist(scale(geo), "euclid")
-plot(geo)
-mantel.partial(veg.dist, env.dist, geo.dist, method="pearson", permutations=999)
-?sample
-
-
-######################################
-# Tests Mentel Partiel
-######################################
-comm<-read.table("/Users/cedrichubas/Documents/CED/2-Enseignement/SEP M2 : ED - multivari?/comm.txt",head=T)
-soil<-read.table("/Users/cedrichubas/Documents/CED/2-Enseignement/SEP M2 : ED - multivari?/soil.txt",head=T,row.names=1)
-geo<-read.table("/Users/cedrichubas/Documents/CED/2-Enseignement/SEP M2 : ED - multivari?/geo.txt",head=T,row.names=1)
-
-library(vegan)
-commdist<-vegdist(comm, method="bray")
-soildist<-vegdist(soil, method="bray")
-geodist<-vegdist(geo, method="euclidean")
-
-### Now, we are going to use a partial mantel test to test if communities have more different species compositions as the soil composition in the sites get increasingly different. We will do that while removing any possible spatial autocorrelation. So, the third distance matrix in the analysis will be the spatial distance between sites.
-mantel(commdist, soildist)
-mantel.partial(commdist, soildist, geodist, method="pearson", permutations=999)
-
-
-Ztheo=NULL
-for (i in 1:1000) {
-	new.veg.dist=sample(as.vector(veg.dist),replace=F)
-	Ztheo[i]=sum(new.veg.dist*env.dist)
-}
-
-Zobs=sum(veg.dist*env.dist)
-hist(Ztheo,xlim=c(800,870))
-abline(v=Zobs)
-nbr.sup=length(which(Ztheo>Zobs))
-p.val=(1+nbr.sup)/1000
-
-#######################################
-
-
-
-res.mds=metaMDS(afc[,1:35], distance="bray", k=2, trymax=500, plot=T) # pour faire le calcul avec un indice de Bray-Curtis
 res.mds
 summary(res.mds)
 res.mds$stress # pour connaitre la valeur du "stress"
 stressplot(res.mds) # pour obtenir le diagrame de Shepard
 
-# on repr?sente la matrice de similarit? 
+# on représente la matrice de similarité
 par(mfrow=c(1,2))
-plot(res.mds, display = c("site"), type="t", main=c("Stress=",res.mds$stress),cex=2)
-s.class(res.mds$point, afc$sitesafc, add.plot=T,col=c("violetred","darkblue","lightseagreen"))
+plot(res.mds, display = c("site"), type="t", main=c("Stress=",res.mds$stress),cex=1)
+s.class(res.mds$point, data.nmds$sitesafc, add.plot=T,col=c("violetred","darkblue","lightseagreen"))
+
 plot(res.mds, display = c("site"), type="t",main=c("Stress=",res.mds$stress))
-s.class(res.mds$point, as.factor(afc$moisafc), add.plot=T,col=colors()[100:112])
+s.class(res.mds$point, as.factor(data.nmds$moisafc), add.plot=T,col=colors()[100:112])
 
-# on peut repr?senter en 3 dimensions (package scatterplot3d obligatoire)
-res.mds2=metaMDS(afc[,1:35], distance="bray", k=3, trymax=50, plot=T) # on refait le calcul avec 3 dimensions
-library(scatterplot3d)
-
-par(mfrow=c(1,2))
-plot(res.mds, display = c("site"), type="t", main=c("Stress=",res.mds$stress))
-s.class(res.mds$point, afc$sitesafc, add.plot=T,col=c("violetred","darkblue","lightseagreen"))
+# on peut représenter en 3 dimensions (package scatterplot3d obligatoire)
+res.mds2 <- metaMDS(data.nmds[,1:35], distance="bray", k=3, trymax=100, plot=T) # on refait le calcul avec 3 dimensions
 scatterplot3d(res.mds2$points[,1], res.mds2$points[,2],res.mds2$points[,3],highlight.3d=T,type="h", main=c("stress=",res.mds2$stress/100))
 
 # on va faire ressortir les groupes 
@@ -357,33 +292,23 @@ res$points3d(c.s$"1"[,1],c.s$"1"[,2],c.s$"1"[,3], type="h",col="violetred", pch=
 res$points3d(c.s$"2"[,1],c.s$"2"[,2],c.s$"2"[,3], type="h",col="darkblue", pch=16)
 res$points3d(c.s$"3"[,1],c.s$"3"[,2],c.s$"3"[,3], type="h",col="lightseagreen", pch=16)
 
-# g?ce ? la fonction metaMDs on peut aussi repr?senter les esp?ces
+# gâce à la fonction metaMDs on peut aussi représenter les espèces
 plot(res.mds, display = c("site","species"), type="t", main=c("Stress=",res.mds$stress))
-s.class(res.mds$point, sitesafc, add.plot=T,col=c("violetred","darkblue","lightseagreen"))
+s.class(res.mds$point, data.nmds$sitesafc, add.plot=T,col=c("violetred","darkblue","lightseagreen"))
+
+###########################
+# EXERCICE nMDS 
+###########################
+
+# Utilisez le jeu de données AFC01
+# Il s'agit du même jeu de données mais converti en présence/absence
+# attention à l'indice de dissimilarité
+
+data.nmds.pa <- read.table("AFC01.txt",h=T)
+
+# petite retouche esthétique de la variable 37
+data.nmds.pa$moisafc <- factor(
+   c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")[data.nmds.pa$moisafc],
+   level=c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"))
 
 
-# EXERCICE avec AFC01
-nmds01=read.table("/Users/cedrichubas/Documents/CED/2-Enseignement/SEP M2 : ED - multivari?/AFC01.txt", h=T)
-attach(nmds01)
-names(nmds01)
-library(vegan)
-multi.afc01=metaMDS(nmds01[,0:35],distance="jaccard",k=3, trymax=50, plot=T)
-plot(multi.afc01, display = c("site","species"), type="t", main=c("Stress=", multi.afc01$stress))
-s.class(res.mds$point, nmds01$sitesafc, add.plot=T,col=c("violetred","darkblue","lightseagreen"))
-
-
-######################################
-# PCoA Bonus !
-######################################
-
-multi=vegdist(afc[,1:35],"bray")
-attach(afc)
-library(vegan)
-library(ade4)
-multibis=cmdscale(multi,eig=T)
-multibis$eig/sum(multibis$eig)*100
-summary(multibis)
-ordiplot(multibis)
-s.class(multibis$points, afc$sitesafc,col=c("violetred","darkblue","lightseagreen"),add.plot=T)
-
-par(mfrow=c(1,2))
