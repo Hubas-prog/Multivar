@@ -16,6 +16,7 @@ library(factoextra)
 library(cowplot)
 library(vegan)
 library(scatterplot3d)
+library(ggplot2)
 
 ###########################
 # aesthetics 
@@ -29,7 +30,7 @@ My_Theme <- theme(
    axis.title = element_text(size = 12),
    legend.title=element_text(size = 12),
    legend.text=element_text(size = 12),
-   strip.background =element_rect(fill="lightgrey"))
+   strip.background =element_rect(fill="white"))
 
 ###########################
 # ACP étude de cas 
@@ -273,12 +274,24 @@ res.mds$stress # pour connaitre la valeur du "stress"
 stressplot(res.mds) # pour obtenir le diagrame de Shepard
 
 # on représente la matrice de similarité
-par(mfrow=c(1,2))
 plot(res.mds, display = c("site"), type="t", main=c("Stress=",res.mds$stress),cex=1)
-s.class(res.mds$point, data.nmds$sitesafc, add.plot=T,col=c("violetred","darkblue","lightseagreen"))
+s.class(res.mds$points, data.nmds$sitesafc, add.plot=T,col=c("violetred","darkblue","lightseagreen"))
 
 plot(res.mds, display = c("site"), type="t",main=c("Stress=",res.mds$stress))
-s.class(res.mds$point, as.factor(data.nmds$moisafc), add.plot=T,col=colors()[100:112])
+s.class(res.mds$points, as.factor(data.nmds$moisafc), add.plot=T,col=colors()[100:112])
+
+# Possibilité d'urtiliser ggplot pour représenter la nMDS
+mds.scores <- data.frame(res.mds$points)
+Sites <- data.nmds$sitesafc
+ggplot(mds.scores,aes(x = MDS1, y = MDS2, col=Sites))+
+   geom_point(size=4)+
+   theme_bw()
+
+ggplot(mds.scores,aes(x = MDS1, y = MDS2, col=Sites))+
+   geom_point(size=4)+
+   stat_ellipse()+ # ajouter des ellipses
+   ggtitle(paste("Stress =",round(res.mds$stress,2)))+ # ajouter la valeur du stress dans le titre
+   theme_bw()
 
 # on peut représenter en 3 dimensions (package scatterplot3d obligatoire)
 res.mds2 <- metaMDS(data.nmds[,1:35], distance="bray", k=3, trymax=100, plot=T) # on refait le calcul avec 3 dimensions
@@ -297,7 +310,19 @@ plot(res.mds, display = c("site","species"), type="t", main=c("Stress=",res.mds$
 s.class(res.mds$point, data.nmds$sitesafc, add.plot=T,col=c("violetred","darkblue","lightseagreen"))
 
 ###########################
-# EXERCICE nMDS 
+# EXERCICE nMDS 1
+###########################
+# réaliser un graphique ggplot présentant les "stations" et les "espèces"
+#mds.sp <- data.frame(res.mds$species)
+#ggplot(mds.scores,aes(x = MDS1, y = MDS2, col=Sites,fill=Sites))+
+#   geom_point(size=2)+
+#   geom_density2d(alpha=0.5)+ # ajouter des contours
+#   ggtitle(paste("Stress =",round(res.mds$stress,2)))+ # ajouter la valeur du stress dans le titre
+#   annotate(geom="text",x=mds.sp$MDS1,y=mds.sp$MDS2,label=rownames(mds.sp),size=4,col="black")+ 
+#   theme_bw()
+
+###########################
+# EXERCICE nMDS 2
 ###########################
 
 # Utilisez le jeu de données AFC01
