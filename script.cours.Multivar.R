@@ -115,25 +115,63 @@ round(cos(143.1*pi/180),1)
 cos(180*pi/180)
 
 ############################
-# Fonction pour Gif
+# Jouez avec les correlations
+# Avec l'aide précieuse d'Elie Arnaud
+# Ingénieur Données et Métadonnées, UMS Patrinat / PNDB
 ############################
 
-make.plot<-function(n,r){
-	data.simul <- mvrnorm(n, mu=c(0, 0), Sigma=matrix(c(1, r, r, 1), nrow=2), empirical=TRUE)
-	x<-data.simul[, 1]
-	y<-data.simul[, 2]
-	plot(y~x,xlim=c(-4,4),ylim=c(-4,4),col="grey")
-	M1<-lm(y~x)
-	M2<-lm(x~y)
-	abline(M1,col="blue",lwd=3)
-	points((x+M2$coef[1])/M2$coef[2]~x,
-	type="l",
-	col="green3",
-	lwd=3)
+ui <- fluidPage(
+  # Side panel to chose n and r settings
+  sidebarPanel(
+    # n
+    # numericInput("n", "Number of samples", max = 10000, min = 1, step = 1),
+    sliderInput("n", "Number of samples", max = 10000, min = 1, step = 1, value = 10000),
+    # r
+    # numericInput("r", "Correlation", 0.23, min = 0, max = 1, step = 0.01)
+    sliderInput("r", "Correlation", max = 1, min = 0, step = 0.01, value = 0.23),
+  ),
+  # Main panel to display plot
+  mainPanel(
+    plotOutput("plot")
+  )
+)
+
+server <- function(input, output, session) {
+  
+  make.plot<-function(n,r){
+    data.simul <- MASS::mvrnorm(
+      n, 
+      mu=c(0, 0), 
+      Sigma=matrix(c(1, r, r, 1), nrow=2),
+      empirical=TRUE
+    )
+    x<-data.simul[, 1]
+    y<-data.simul[, 2]
+    plot(y~x,xlim=c(-4,4),ylim=c(-4,4),col="grey")
+    M1<-lm(y~x)
+    M2<-lm(x~y)
+    abline(M1,col="blue",lwd=3)
+    points(
+      (x+M2$coef[1])/M2$coef[2]~x,
+      type="l",
+      col="green3",
+      lwd=3
+    )
+  }
+  
+  # Fournir le coefficient de corrélation r et le nombre d'échantillons n pour générer le graphique correspondant
+  make.plot(n=10000,r=0.23)
+  
+  output$plot <- renderPlot(
+    # make.plot(n=10000,r=0.23)
+    make.plot(
+      n=input$n,
+      r=input$r
+    )
+  )
 }
 
-# Fournir le coefficient de correlation r et le nombre d'échantillons n pour générer le graphique correspondant
-make.plot(n=10000,r=0.23)
+shinyApp(ui, server)
 
 
 ############################
@@ -320,46 +358,3 @@ plot(as.phylo(tree),
 	label.offset = 0,
 	no.margin = TRUE,
 	tip.color = rainbow(3)[cutree(tree,3)])
-
-
-######################################
-# Tests Mantel
-######################################
-
-data(varespec)
-dim(varespec)
-data(varechem)
-dim(varechem)
-veg.dist <- vegdist(varespec) # Bray-Curtis
-env.dist <- vegdist(scale(varechem), "euclid")
-
-mantel(veg.dist, env.dist)
-mantel(veg.dist, env.dist, method="spear")
-
-attr(veg.dist,"Size")
-attr(env.dist,"Size")
-
-mantel.test(veg.dist, env.dist, nrepet = 9999)
-cor.test(as.vector(veg.dist),as.vector(env.dist))
-geo=data.frame(LAT=sample(seq(from=-49.28217,to=-49.28159,by=0.00001),size=24),LONG=sample(seq(from=-16.59406,to=-16.59384,by=0.000001),size=24))
-
-geo.dist <- vegdist(scale(geo), "euclid")
-plot(geo)
-mantel.partial(veg.dist, env.dist, geo.dist, method="pearson", permutations=999)
-
-
-######################################
-# Tests Mantel Partiel
-######################################
-comm<-read.table("/Users/cedrichubas/Documents/CED/2-Enseignement/SEP M2 : ED - multivarié/comm.txt",head=T)
-soil<-read.table("/Users/cedrichubas/Documents/CED/2-Enseignement/SEP M2 : ED - multivarié/soil.txt",head=T,row.names=1)
-geo<-read.table("/Users/cedrichubas/Documents/CED/2-Enseignement/SEP M2 : ED - multivarié/geo.txt",head=T,row.names=1)
-
-data()
-commdist<-vegdist(comm, method="bray")
-soildist<-vegdist(soil, method="euclidean")
-geodist<-vegdist(geo, method="euclidean")
-
-### Now, we are going to use a partial mantel test to test if communities have more different species compositions as the soil composition in the sites get increasingly different. We will do that while removing any possible spatial autocorrelation. So, the third distance matrix in the analysis will be the spatial distance between sites.
-mantel(commdist, soildist)
-mantel.partial(commdist, soildist, geodist, method="pearson", permutations=999)
