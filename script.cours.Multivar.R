@@ -13,6 +13,7 @@ library(MASS)
 library(corrplot)
 library(FactoMineR)
 library(factoextra)
+library(shiny)
 library(vegan)
 library(ggplot2)
 library(scatterplot3d)
@@ -128,7 +129,7 @@ ui <- fluidPage(
     sliderInput("n", "Number of samples", max = 10000, min = 1, step = 1, value = 10000),
     # r
     # numericInput("r", "Correlation", 0.23, min = 0, max = 1, step = 0.01)
-    sliderInput("r", "Correlation", max = 1, min = 0, step = 0.01, value = 0.23),
+    sliderInput("r", "Correlation", max = 1, min = -1, step = 0.01, value = 0.23),
   ),
   # Main panel to display plot
   mainPanel(
