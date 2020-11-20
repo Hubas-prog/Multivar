@@ -6,7 +6,7 @@
 #================================
 
 ###########################
-# Packages necessaires 
+# Packages necessaires
 ###########################
 
 library(MASS)
